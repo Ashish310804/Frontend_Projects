@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", loadBookmarks);
 addBookmarkBtn.addEventListener("click", function () {
   const name = bookmarkNameInput.value.trim();
   const url = bookmarkUrlInput.value.trim();
-
   if (!name || !url) {
     alert("Please enter both name and URL.");
     return;
@@ -17,7 +16,6 @@ addBookmarkBtn.addEventListener("click", function () {
       alert("Please enter a valid URL starting with http:// or https://");
       return;
     }
-
     addBookmark(name, url);
     saveBookmark(name, url);
     bookmarkNameInput.value = "";
@@ -31,17 +29,14 @@ function addBookmark(name, url) {
   link.href = url;
   link.textContent = name;
   link.target = "_blank";
-
   const removeButton = document.createElement("button");
   removeButton.textContent = "Remove";
   removeButton.addEventListener("click", function () {
     bookmarkList.removeChild(li);
     removeBookmarkFromStorage(name, url);
   });
-
   li.appendChild(link);
   li.appendChild(removeButton);
-
   bookmarkList.appendChild(li);
 }
 
