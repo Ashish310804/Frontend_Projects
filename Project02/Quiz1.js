@@ -66,6 +66,7 @@ const quizQuestions = [
 let currentQuestionIndex = 0;
 
 let score = 0;
+
 let answersDisabled = false;
 
 totalQuestionsSpan.textContent = quizQuestions.length;
