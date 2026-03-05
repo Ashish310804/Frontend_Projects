@@ -79,7 +79,6 @@ function startQuiz() {
   scoreSpan.textContent = 0;
   startScreen.classList.remove("active");
   quizScreen.classList.add("active");
-
   showQuestion();
 }
 
