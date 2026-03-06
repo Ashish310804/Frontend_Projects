@@ -87,14 +87,10 @@ function showQuestion() {
   answersDisabled = false;
   const currentQuestion = quizQuestions[currentQuestionIndex];
   currentQuestionSpan.textContent = currentQuestionIndex + 1;
-
   const progressPercent = (currentQuestionIndex / quizQuestions.length) * 100;
   progressBar.style.width = progressPercent + "%";
-
   questionText.textContent = currentQuestion.question;
-
   answersContainer.innerHTML = "";
-
   currentQuestion.answers.forEach((answer) => {
     const button = document.createElement("button");
     button.textContent = answer.text;
