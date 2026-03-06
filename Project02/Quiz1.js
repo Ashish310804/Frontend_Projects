@@ -154,6 +154,5 @@ function showResults() {
 
 function restartQuiz() {
   resultScreen.classList.remove("active");
-
   startQuiz();
 }
