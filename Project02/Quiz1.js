@@ -122,7 +122,8 @@ function selectAnswer(event) {
   if (isCorrect) {
     score++;
     scoreSpan.textContent = score;
-  }setTimeout(() => {
+  }
+  setTimeout(() => {
     currentQuestionIndex++;
 
   // check if there are more questions or if the quiz is over
