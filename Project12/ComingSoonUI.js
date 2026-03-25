@@ -1,6 +1,6 @@
 // new Date(year, month, day, hour, minute)
 // Note: month is 0-indexed (0 = Jan, 11 = Dec)
-const launchDate = new Date(2026, 0, 1, 12, 0); // Jan 1, 2026, at 12:00 PM
+const launchDate = new Date(2026, 0, 1, 12, 0);       // Jan 1, 2026, at 12:00 PM
 
 // DOM ELEMENTS
 const daysEl = document.getElementById("days");
