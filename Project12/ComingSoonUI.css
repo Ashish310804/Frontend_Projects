@@ -64,17 +64,6 @@ body {
   animation-delay: -10s;
 }
 
-/* Animation-delay can be positive or negative and they do different things:
-
-
-Positive (2s)	Waits 2 seconds, then starts the animation
-Negative (-7s)	Starts immediately, but 7 seconds into the animation
-Example with -7s:
-If you have a 20-second animation and set animation-delay: -7s:
-Animation starts right away
-But it begins at the 7-second mark (skips the first 7 seconds) 
-
-*/
 
 @keyframes float {
   0%,
