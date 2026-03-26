@@ -104,6 +104,7 @@ a {
   /* option 1: using grid */
   display: grid;
   place-items: center;
+  
   /* option 2: using flex to center */
   /* display: flex;
   align-items: center;
