@@ -1,4 +1,3 @@
-// DOM Elements
 const stars = document.querySelectorAll(".star");
 const ratingText = document.querySelector(".rating-text");
 const submitBtn = document.querySelector(".submit-btn");
