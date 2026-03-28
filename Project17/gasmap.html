@@ -1,222 +1,363 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LPG Smart Monitor</title>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<style>
-:root {
-  --primary: #FF0000;
-  --bg-dark: #0a0a0a;
-  --bg-card: #1a1a1a;
-  --text: #ffffff;
-  --accent-yellow: #ffcc00;
-}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GasMap | Smart LPG Monitoring</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  font-family: Arial, sans-serif;
-}
+    <style>
+        :root {
+            --primary: #FF0000;
+            --accent: #FFD700;
+            --bg-dark: #0a0a0a;
+            --card-bg: #1a1a1a;
+            --text-main: #ffffff;
+            --text-dim: #b3b3b3;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
 
-body {
-  background: linear-gradient(135deg, #1a0000, #330000);
-  color: var(--text);
-}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', sans-serif;
+        }
 
-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 30px;
-  background: black;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-}
+        body {
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #200000 100%);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
 
-nav h1 {
-  color: var(--primary);
-}
+        /* --- Navigation --- */
+        nav {
+            background: rgba(0, 0, 0, 0.9);
+            padding: 1rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 2px solid var(--primary);
+            backdrop-filter: blur(10px);
+        }
 
-nav ul {
-  display: flex;
-  list-style: none;
-}
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
 
-nav ul li {
-  margin: 0 15px;
-}
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
 
-nav ul li a {
-  color: white;
-  text-decoration: none;
-  transition: 0.3s;
-}
+        .nav-links a {
+            color: var(--text-main);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
 
-nav ul li a:hover {
-  color: var(--primary);
-  transform: scale(1.1);
-}
+        .nav-links a:hover {
+            color: var(--accent);
+            transform: translateY(-2px);
+        }
 
-.container {
-  padding: 20px;
-}
+        /* --- Main Layout --- */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
 
-.card {
-  background: var(--bg-card);
-  padding: 20px;
-  margin: 15px 0;
-  border-radius: 12px;
-  box-shadow: 0 0 10px rgba(255,0,0,0.3);
-  transition: 0.3s;
-}
+        .card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 1.5rem;
+            border: 1px solid #333;
+            transition: var(--transition);
+        }
 
-.card:hover {
-  transform: scale(1.03);
-}
+        .card:hover {
+            transform: scale(1.02);
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px rgba(255, 0, 0, 0.1);
+        }
 
-input, button {
-  padding: 10px;
-  margin: 10px 0;
-  border-radius: 8px;
-  border: none;
-}
+        h2 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
-button {
-  background: var(--primary);
-  color: white;
-  cursor: pointer;
-}
+        /* --- Gauge & Metrics --- */
+        .status-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
 
-button:hover {
-  background: var(--accent-yellow);
-  color: black;
-}
+        .metric {
+            text-align: center;
+            padding: 1rem;
+            background: #252525;
+            border-radius: 10px;
+        }
 
-.chatbox {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 300px;
-  background: #111;
-  border-radius: 12px;
-  overflow: hidden;
-}
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
 
-.chat-header {
-  background: var(--primary);
-  padding: 10px;
-}
+        /* --- Input Form --- */
+        .input-group {
+            margin-bottom: 1rem;
+        }
 
-.chat-body {
-  height: 200px;
-  overflow-y: auto;
-  padding: 10px;
-}
+        input {
+            width: 100%;
+            padding: 12px;
+            background: #252525;
+            border: 1px solid #444;
+            color: white;
+            border-radius: 8px;
+            margin-top: 5px;
+        }
 
-.chat-input {
-  display: flex;
-}
+        button {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
 
-.chat-input input {
-  flex: 1;
-}
+        button:hover {
+            background: #cc0000;
+            filter: brightness(1.2);
+        }
 
-@media(max-width:768px){
-  nav ul {
-    display: none;
-  }
-}
-</style>
+        /* --- Chatbox --- */
+        #chat-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 300px;
+            background: var(--card-bg);
+            border: 2px solid var(--primary);
+            border-radius: 15px;
+            display: none;
+            flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        #chat-messages {
+            height: 250px;
+            overflow-y: auto;
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+
+        .bot-msg { color: var(--accent); margin-bottom: 8px; }
+        .user-msg { color: #fff; text-align: right; margin-bottom: 8px; }
+
+        .chat-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            z-index: 999;
+        }
+
+        /* --- Responsive Design --- */
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .container { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
 
-<nav>
-  <h1><i class="fa-solid fa-fire"></i> LPG Monitor</h1>
-  <ul>
-    <li><a href="#dashboard">Dashboard</a></li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#guide">Guide</a></li>
-    <li><a href="#manual">Manual Entry</a></li>
-  </ul>
-</nav>
+    <nav>
+        <div class="logo"><i class="fas fa-fire"></i> GasMap</div>
+        <div class="nav-links">
+            <a href="#dashboard">Dashboard</a>
+            <a href="#usage">Analytics</a>
+            <a href="#guide">Safety Guide</a>
+            <a href="#manual">Manual Entry</a>
+        </div>
+    </nav>
 
-<div class="container">
+    <div class="container">
+        <div class="card" id="dashboard">
+            <h2><i class="fas fa-tachometer-alt"></i> Live Pressure</h2>
+            <div class="status-grid">
+                <div class="metric">
+                    <p>Current PSI</p>
+                    <div class="metric-value" id="psi-display">120</div>
+                </div>
+                <div class="metric">
+                    <p>Remaining</p>
+                    <div class="metric-value" id="perc-display">85%</div>
+                </div>
+            </div>
+            <div style="margin-top: 20px;">
+                <p><i class="fas fa-clock"></i> Est. Continuous Usage: <span id="time-left" style="color:var(--accent)">42 Hours</span></p>
+                <p><i class="fas fa-calendar-alt"></i> Predicted End: <span id="end-date" style="color:var(--accent)">Oct 12, 2023</span></p>
+            </div>
+        </div>
 
-<div class="card" id="dashboard">
-  <h2>Gas Level</h2>
-  <p id="gasLevel">--%</p>
-</div>
+        <div class="card" id="usage">
+            <h2><i class="fas fa-chart-line"></i> Daily Usage Trend</h2>
+            <canvas id="usageChart"></canvas>
+        </div>
 
-<div class="card" id="usage">
-  <h2>Daily Usage</h2>
-  <p id="dailyUsage">-- kg</p>
-  <p id="remainingDays">-- days left</p>
-</div>
+        <div class="card" id="manual">
+            <h2><i class="fas fa-edit"></i> Update Cylinder Data</h2>
+            <div class="input-group">
+                <label>Current Pressure (PSI)</label>
+                <input type="number" id="manual-psi" placeholder="Enter PSI value...">
+            </div>
+            <div class="input-group">
+                <label>Last Refill Date</label>
+                <input type="date" id="refill-date">
+            </div>
+            <button onclick="updateData()">Update Dashboard</button>
+        </div>
 
-<div class="card" id="manual">
-  <h2>Manual Data Input</h2>
-  <input type="number" id="pressure" placeholder="Enter Pressure">
-  <input type="number" id="weight" placeholder="Enter Cylinder Weight">
-  <button onclick="calculate()">Calculate</button>
-</div>
+        <div class="card" id="guide">
+            <h2><i class="fas fa-shield-alt"></i> Management Guide</h2>
+            <ul style="list-style: none; color: var(--text-dim); font-size: 0.9rem;">
+                <li style="margin-bottom: 10px;"><i class="fas fa-check-circle" style="color: var(--primary);"></i> Check regulator seals every 3 months.</li>
+                <li style="margin-bottom: 10px;"><i class="fas fa-check-circle" style="color: var(--primary);"></i> If pressure drops >10 PSI instantly, check for leaks.</li>
+                <li style="margin-bottom: 10px;"><i class="fas fa-check-circle" style="color: var(--primary);"></i> Keep cylinder in vertical position at all times.</li>
+            </ul>
+        </div>
+    </div>
 
-<div class="card" id="guide">
-  <h2>Usage Guide</h2>
-  <ul>
-    <li>Always check leakage</li>
-    <li>Turn off regulator when not in use</li>
-    <li>Monitor pressure daily</li>
-    <li>Keep cylinder upright</li>
-  </ul>
-</div>
+    <div class="chat-toggle" onclick="toggleChat()"><i class="fas fa-comment-dots"></i></div>
+    <div id="chat-container">
+        <div style="background: var(--primary); padding: 10px; font-weight: bold; border-radius: 12px 12px 0 0;">GasMap Assistant</div>
+        <div id="chat-messages">
+            <div class="bot-msg">Hello! How can I help you with your LPG status today?</div>
+        </div>
+        <div style="padding: 10px; border-top: 1px solid #333;">
+            <input type="text" id="chat-input" placeholder="Type a question..." style="margin: 0; padding: 8px;">
+        </div>
+    </div>
 
-</div>
+    <script>
+        // --- Initialization ---
+        let currentPsi = 120;
+        const maxPsi = 150;
 
-<div class="chatbox">
-  <div class="chat-header">Chat Assistant</div>
-  <div class="chat-body" id="chatBody"></div>
-  <div class="chat-input">
-    <input type="text" id="chatInput" placeholder="Ask something...">
-    <button onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
-  </div>
-</div>
+        // --- Chart Config ---
+        const ctx = document.getElementById('usageChart').getContext('2d');
+        const usageChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Usage (PSI Drop)',
+                    data: [12, 19, 15, 8, 22, 30, 10],
+                    borderColor: '#FF0000',
+                    backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { labels: { color: '#fff' } } },
+                scales: {
+                    y: { ticks: { color: '#b3b3b3' }, grid: { color: '#333' } },
+                    x: { ticks: { color: '#b3b3b3' }, grid: { color: '#333' } }
+                }
+            }
+        });
 
-<script>
-function calculate(){
-  let pressure = document.getElementById('pressure').value;
-  let weight = document.getElementById('weight').value;
+        // --- Core Functions ---
+        function updateData() {
+            const inputVal = document.getElementById('manual-psi').value;
+            if(!inputVal) return alert("Please enter a value");
+            
+            currentPsi = inputVal;
+            const percentage = Math.round((currentPsi / maxPsi) * 100);
+            
+            // Update UI
+            document.getElementById('psi-display').innerText = currentPsi;
+            document.getElementById('perc-display').innerText = percentage + "%";
+            
+            // Calculate Logic
+            const hoursLeft = Math.floor(currentPsi * 0.35); // Hypothetical burn rate
+            document.getElementById('time-left').innerText = hoursLeft + " Hours";
+            
+            // Add to chart
+            usageChart.data.datasets[0].data.shift();
+            usageChart.data.datasets[0].data.push(Math.random() * 20);
+            usageChart.update();
+        }
 
-  let gasLevel = (pressure * 2).toFixed(1);
-  let dailyUsage = (weight / 14).toFixed(2);
-  let daysLeft = (gasLevel / dailyUsage).toFixed(0);
+        // --- Chatbox Logic ---
+        function toggleChat() {
+            const chat = document.getElementById('chat-container');
+            chat.style.display = chat.style.display === 'flex' ? 'none' : 'flex';
+        }
 
-  document.getElementById('gasLevel').innerText = gasLevel + "%";
-  document.getElementById('dailyUsage').innerText = dailyUsage + " kg";
-  document.getElementById('remainingDays').innerText = daysLeft + " days";
-}
+        document.getElementById('chat-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                const msg = this.value;
+                const container = document.getElementById('chat-messages');
+                
+                container.innerHTML += `<div class="user-msg">${msg}</div>`;
+                
+                // Simple Bot Logic
+                setTimeout(() => {
+                    let response = "I'm not sure about that. Try checking your PSI levels!";
+                    if(msg.toLowerCase().includes("leak")) response = "DANGER: Close the regulator and open all windows immediately!";
+                    if(msg.toLowerCase().includes("status")) response = `Your current pressure is ${currentPsi} PSI.`;
+                    
+                    container.innerHTML += `<div class="bot-msg">${response}</div>`;
+                    container.scrollTop = container.scrollHeight;
+                }, 600);
+                
+                this.value = '';
+            }
+        });
 
-function sendMessage(){
-  let input = document.getElementById('chatInput');
-  let message = input.value;
-  let chatBody = document.getElementById('chatBody');
-
-  chatBody.innerHTML += "<p><b>You:</b> " + message + "</p>";
-
-  let reply = "I can help with LPG usage, safety, and estimation.";
-
-  if(message.toLowerCase().includes('empty')){
-    reply = "Your cylinder may last depending on usage shown above.";
-  }
-
-  chatBody.innerHTML += "<p><b>Bot:</b> " + reply + "</p>";
-  input.value = "";
-  chatBody.scrollTop = chatBody.scrollHeight;
-}
-</script>
-
+        // Simulated Real-time fluctuation
+        setInterval(() => {
+            let wiggle = (Math.random() * 0.5 - 0.25).toFixed(2);
+            document.getElementById('psi-display').innerText = (parseFloat(currentPsi) + parseFloat(wiggle)).toFixed(1);
+        }, 3000);
+    </script>
 </body>
 </html>
