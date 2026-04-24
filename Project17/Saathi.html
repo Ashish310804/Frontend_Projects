@@ -417,39 +417,309 @@
   </div>
 
   <script>
-    const days = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-    const dailyUsage = document.getElementById('dailyUsage');
+    // State Management
+    let appState = {
+      selectedWeight: 14.2,
+      currentPressure: 12.00,
+      maxPressure: 15.0,
+      readings: [
+        { pressure: 12.00, date: new Date(Date.now() - 14 * 60000) },
+        { pressure: 14.00, date: new Date(Date.now() - 1440 * 60000) },
+        { pressure: 14.10, date: new Date(Date.now() - 1440 * 60000) },
+        { pressure: 12.90, date: new Date(Date.now() - 2880 * 60000) }
+      ]
+    };
 
-    days.forEach(day => {
-      dailyUsage.innerHTML += `
-        <div class="daily-row">
-          <span>${day}</span>
-          <div class="progress"><div style="width:${Math.random() * 18}%"></div></div>
-          <span>${Math.random() > 0.7 ? '0.01 kg' : '—'}</span>
-        </div>`;
-    });
+    // Initialize
+    function initialize() {
+      document.getElementById('dateInput').value = new Date().toISOString().slice(0, 16);
+      generateDailyUsage();
+      updateGaugeDisplay();
+      attachHistoryDeleteHandlers();
+      generatePressureChart();
+    }
 
-    document.getElementById('dateInput').value = new Date().toISOString().slice(0, 16);
+    // Daily Usage Generator
+    function generateDailyUsage() {
+      const days = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
+      const dailyUsage = document.getElementById('dailyUsage');
+      let totalUsage = 0;
 
+      days.forEach(day => {
+        const usage = Math.random() * 0.025;
+        totalUsage += usage;
+        const width = (usage / 0.025) * 100;
+        dailyUsage.innerHTML += `
+          <div class="daily-row">
+            <span>${day}</span>
+            <div class="progress"><div style="width:${width}%"></div></div>
+            <span>${usage > 0.001 ? usage.toFixed(3) + ' kg' : '—'}</span>
+          </div>`;
+      });
+
+      // Update total usage
+      const totalSpan = document.querySelector('.usage-box p span');
+      if (totalSpan) totalSpan.innerText = totalUsage.toFixed(3) + ' kg total';
+    }
+
+    // Cylinder Selection
     function selectCylinder(card, weight) {
       document.querySelectorAll('.cylinder-card').forEach(c => c.classList.remove('active'));
       card.classList.add('active');
+      appState.selectedWeight = weight;
       document.getElementById('selectedWeight').innerText = weight + ' kg';
-      document.getElementById('remaining').innerText = Number(weight).toFixed(2) + ' kg';
-      document.getElementById('weightText').innerText = Number(weight).toFixed(2) + ' kg left';
+      document.getElementById('remaining').innerText = weight.toFixed(2) + ' kg';
+      document.getElementById('weightText').innerText = weight.toFixed(2) + ' kg left';
+      updateGaugeDisplay();
     }
 
+    // Update Gauge Display
+    function updateGaugeDisplay() {
+      const percentage = Math.min((appState.currentPressure / appState.maxPressure) * 100, 100);
+      const remaining = (appState.selectedWeight / appState.maxPressure) * appState.currentPressure;
+      
+      document.getElementById('percent').innerText = percentage.toFixed(0) + '%';
+      document.getElementById('remaining').innerText = remaining.toFixed(2) + ' kg';
+      document.getElementById('weightText').innerText = remaining.toFixed(2) + ' kg left';
+      document.getElementById('pressure').innerText = appState.currentPressure.toFixed(2) + ' bar';
+
+      // Update gauge color
+      const gauge = document.querySelector('.gauge');
+      if (percentage > 70) {
+        gauge.style.borderColor = '#2c9b65';
+      } else if (percentage > 30) {
+        gauge.style.borderColor = '#f5a623';
+      } else {
+        gauge.style.borderColor = '#ef2b2b';
+      }
+
+      // Update status indicator
+      const statusSpan = document.querySelector('.section-title .green, .section-title .red');
+      if (statusSpan) {
+        if (percentage > 70) {
+          statusSpan.className = 'green';
+          statusSpan.innerText = '● Full';
+        } else if (percentage > 30) {
+          statusSpan.className = 'green';
+          statusSpan.innerText = '● Half';
+        } else {
+          statusSpan.className = 'red';
+          statusSpan.innerText = '● Low';
+        }
+      }
+
+      // Calculate and update metrics
+      updateMetrics();
+    }
+
+    // Calculate Metrics
+    function updateMetrics() {
+      const readings = appState.readings;
+      
+      if (readings.length >= 2) {
+        const latest = readings[0];
+        const oldest = readings[readings.length - 1];
+        const timeDiffHours = (latest.date - oldest.date) / (1000 * 60 * 60);
+        const pressureDrop = latest.pressure - oldest.pressure;
+        const usageRate = Math.abs(pressureDrop / timeDiffHours);
+
+        document.querySelectorAll('.metric-card')[0].innerHTML = 
+          `<div class="metric-label">Usage rate</div><div class="metric-value">${usageRate.toFixed(3)}</div><small>kg/day</small>`;
+
+        // Calculate recent drop
+        const recentDrop = pressureDrop;
+        document.querySelectorAll('.metric-card')[2].innerHTML = 
+          `<div class="metric-label">Recent drop</div><div class="metric-value">${Math.abs(recentDrop).toFixed(2)}</div><small>bar in ${Math.round(timeDiffHours * 60)} min</small>`;
+      }
+
+      // Average pressure
+      const avgPressure = (appState.readings.reduce((sum, r) => sum + r.pressure, 0) / appState.readings.length).toFixed(2);
+      document.querySelectorAll('.metric-card')[3].innerHTML = 
+        `<div class="metric-label">Avg pressure</div><div class="metric-value">${avgPressure}</div><small>bar · ${appState.readings.length} logs</small>`;
+
+      // Check for leak
+      checkLeakStatus();
+      
+      // Calculate forecast
+      calculateForecast();
+    }
+
+    // Check Leak Status
+    function checkLeakStatus() {
+      if (appState.readings.length < 2) return;
+
+      const latest = appState.readings[0];
+      const recentReadings = appState.readings.slice(0, Math.min(3, appState.readings.length));
+      const pressureDrops = [];
+
+      for (let i = 0; i < recentReadings.length - 1; i++) {
+        pressureDrops.push(Math.abs(recentReadings[i].pressure - recentReadings[i + 1].pressure));
+      }
+
+      const avgDrop = pressureDrops.reduce((a, b) => a + b, 0) / pressureDrops.length;
+      const hasLeak = avgDrop > 2.0; // More than 2 bar drop indicates leak
+
+      const leakStatus = document.querySelector('.alert-card.green');
+      if (leakStatus) {
+        if (hasLeak) {
+          leakStatus.innerHTML = '<span class="red">⚠ Leak detected</span><br /><small style="color:#ef2b2b;">Pressure dropping rapidly.</small>';
+        } else {
+          leakStatus.innerHTML = '● <span class="green">No leak detected</span><br /><small>Pressure is stable.</small>';
+        }
+      }
+
+      const leakIndicator = document.querySelectorAll('.metric-value')[2];
+      if (leakIndicator) {
+        leakIndicator.innerHTML = hasLeak ? '<span class="red">⚠ Leak</span>' : '<span class="green">No leak</span>';
+      }
+    }
+
+    // Calculate Forecast
+    function calculateForecast() {
+      const readings = appState.readings;
+      if (readings.length < 2) {
+        document.querySelector('.alert-card.red').innerHTML = 'Estimated end date<br /><b>Need more readings</b>';
+        return;
+      }
+
+      const latest = readings[0];
+      const oldest = readings[readings.length - 1];
+      const pressureDiff = latest.pressure - oldest.pressure;
+      const timeDiffDays = (latest.date - oldest.date) / (1000 * 60 * 60 * 24);
+      
+      if (timeDiffDays === 0 || pressureDiff >= 0) {
+        document.querySelector('.alert-card.red').innerHTML = 'Estimated end date<br /><b>Not enough data</b>';
+        return;
+      }
+
+      const daysToEmpty = (latest.pressure / Math.abs(pressureDiff)) * timeDiffDays;
+      const endDate = new Date(latest.date.getTime() + daysToEmpty * 24 * 60 * 60 * 1000);
+      
+      const options = { month: 'short', day: 'numeric', year: 'numeric' };
+      const formattedDate = endDate.toLocaleDateString('en-US', options);
+      
+      document.querySelector('.alert-card.red').innerHTML = 
+        `Estimated end date<br /><b>${formattedDate}</b>`;
+    }
+
+    // Save Reading
     function saveReading(event) {
       event.preventDefault();
-      const pressure = document.getElementById('pressureInput').value;
+      const pressure = parseFloat(document.getElementById('pressureInput').value);
+      const date = new Date(document.getElementById('dateInput').value);
+
+      if (isNaN(pressure) || pressure < 0) {
+        alert('Please enter a valid pressure value');
+        return;
+      }
+
+      appState.currentPressure = pressure;
+      appState.readings.unshift({ pressure, date });
+
+      // Add to history
       const history = document.getElementById('history');
       const item = document.createElement('div');
       item.className = 'history-item';
-      item.innerHTML = `<div><b>${pressure} bar</b><br /><small>Just now</small></div><span>×</span>`;
+      const timeStr = date.toLocaleString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        hour: '2-digit', 
+        minute: '2-digit',
+        meridiem: 'short'
+      });
+      item.innerHTML = `<div><b>${pressure.toFixed(2)} bar</b><br /><small>${timeStr}</small></div><span class="delete-btn" onclick="deleteReading(this)">×</span>`;
       history.prepend(item);
-      document.getElementById('pressure').innerText = Number(pressure).toFixed(2) + ' bar';
+
+      // Update section title span
+      const span = document.querySelector('.history-box').closest('section').querySelector('.section-title span');
+      if (span) span.innerText = appState.readings.length + ' entries';
+
+      updateGaugeDisplay();
+      generatePressureChart();
       alert('Reading saved successfully!');
     }
+
+    // Delete Reading
+    function deleteReading(btn) {
+      const item = btn.closest('.history-item');
+      const pressureText = item.querySelector('b').innerText;
+      const pressureValue = parseFloat(pressureText);
+      
+      const index = appState.readings.findIndex(r => Math.abs(r.pressure - pressureValue) < 0.01);
+      if (index > -1) {
+        appState.readings.splice(index, 1);
+      }
+
+      item.remove();
+      const span = document.querySelector('.history-box').closest('section').querySelector('.section-title span');
+      if (span) span.innerText = appState.readings.length + ' entries';
+      
+      updateGaugeDisplay();
+      generatePressureChart();
+    }
+
+    // Generate Pressure Chart
+    function generatePressureChart() {
+      const readings = appState.readings.slice().reverse();
+      if (readings.length < 2) return;
+
+      const minPressure = Math.min(...readings.map(r => r.pressure));
+      const maxPressure = Math.max(...readings.map(r => r.pressure));
+      const range = maxPressure - minPressure || 1;
+      
+      let points = '';
+      readings.forEach((reading, index) => {
+        const x = 30 + (index / (readings.length - 1)) * 350;
+        const y = 120 - ((reading.pressure - minPressure) / range) * 80;
+        points += `${x},${y} `;
+      });
+
+      const svg = document.querySelector('.line-chart svg');
+      const polyline = svg.querySelector('polyline');
+      polyline.setAttribute('points', points.trim());
+
+      // Remove old circles
+      svg.querySelectorAll('circle[id^="reading"]').forEach(c => c.remove());
+
+      // Add new circles
+      readings.forEach((reading, index) => {
+        const x = 30 + (index / (readings.length - 1)) * 350;
+        const y = 120 - ((reading.pressure - minPressure) / range) * 80;
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', x);
+        circle.setAttribute('cy', y);
+        circle.setAttribute('r', 4);
+        circle.setAttribute('fill', '#ef2b2b');
+        circle.setAttribute('id', 'reading-' + index);
+        svg.appendChild(circle);
+      });
+    }
+
+    // Attach delete handlers to existing history items
+    function attachHistoryDeleteHandlers() {
+      document.querySelectorAll('.history-item span').forEach((span, index) => {
+        span.style.cursor = 'pointer';
+        span.onclick = function() {
+          const item = this.closest('.history-item');
+          const pressureText = item.querySelector('b').innerText;
+          const pressureValue = parseFloat(pressureText);
+          
+          const historyIndex = appState.readings.findIndex(r => Math.abs(r.pressure - pressureValue) < 0.01);
+          if (historyIndex > -1) {
+            appState.readings.splice(historyIndex, 1);
+          }
+          
+          item.remove();
+          const span = document.querySelector('.history-box').closest('section').querySelector('.section-title span');
+          if (span) span.innerText = appState.readings.length + ' entries';
+          updateGaugeDisplay();
+          generatePressureChart();
+        };
+      });
+    }
+
+    // Start the app
+    initialize();
   </script>
 </body>
 </html>
