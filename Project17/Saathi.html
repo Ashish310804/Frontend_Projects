@@ -600,7 +600,7 @@
         </div>
       </div>
       <div class="top-info">
-        Last reading<br />Apr 24, 10:58 AM
+        Last reading<br />Apr 25, 10:58 AM
         <div class="menu-container">
           <button class="menu-btn" onclick="toggleMenu()">☰</button>
           <div class="menu-dropdown" id="menuDropdown">
@@ -842,6 +842,7 @@
       updateGaugeDisplay();
       attachHistoryDeleteHandlers();
       generatePressureChart();
+      updateLastReadingDisplay();
       
       // Apply dark mode if enabled
       if (appState.darkMode) {
@@ -857,6 +858,22 @@
           menu.classList.remove('active');
         }
       });
+    }
+
+    // Update Last Reading Display
+    function updateLastReadingDisplay() {
+      if (appState.readings.length > 0) {
+        const latestReading = appState.readings[0];
+        const timeStr = latestReading.date.toLocaleString('en-US', { 
+          month: 'short', 
+          day: 'numeric', 
+          hour: '2-digit', 
+          minute: '2-digit',
+          meridiem: 'short'
+        });
+        const menuContainer = document.querySelector('.menu-container').outerHTML;
+        document.querySelector('.top-info').innerHTML = `Last reading<br />${timeStr}` + menuContainer;
+      }
     }
 
     // Save Readings to Local Storage
@@ -1182,6 +1199,7 @@
       updateGaugeDisplay();
       generatePressureChart();
       saveReadings();
+      updateLastReadingDisplay();
       alert('Reading saved successfully!');
     }
 
@@ -1219,6 +1237,7 @@
       updateGaugeDisplay();
       generatePressureChart();
       saveReadings();
+      updateLastReadingDisplay();
       alert('Current reading added successfully!');
     }
 
@@ -1240,6 +1259,7 @@
       updateGaugeDisplay();
       generatePressureChart();
       saveReadings();
+      updateLastReadingDisplay();
     }
 
     // Generate Pressure Chart
@@ -1299,6 +1319,7 @@
           updateGaugeDisplay();
           generatePressureChart();
           saveReadings();
+          updateLastReadingDisplay();
         };
       });
     }
