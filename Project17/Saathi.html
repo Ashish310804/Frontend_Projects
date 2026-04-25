@@ -818,7 +818,7 @@
       <div class="content status-box">
         <div class="gauge">
           <strong id="percent">100%</strong>
-          <span id="weightText">14.20 kg left</span>
+          <span id="weightText">0 kg left</span>
         </div>
         <div class="status-details">
           <div><div class="metric-label">Pressure</div><div class="metric-value" id="pressure">12.00 bar</div><small>Usage rate —</small></div>
@@ -991,6 +991,7 @@
       userName: 'Guest User',
       userEmail: 'guest@example.com',
       darkMode: localStorage.getItem('darkMode') === 'true',
+      iotConnected: false,
       settings: {
         notificationFreq: localStorage.getItem('notificationFreq') || 'daily',
         leakThreshold: parseFloat(localStorage.getItem('leakThreshold')) || 2.0,
@@ -1000,8 +1001,11 @@
 
     // Initialize
     async function initialize() {
+      loadAppState();
       await loadReadings();
       document.getElementById('dateInput').value = new Date().toISOString().slice(0, 16);
+      renderHistory();
+      restoreSelectedCylinder();
       generateDailyUsage();
       updateGaugeDisplay();
       attachHistoryDeleteHandlers();
@@ -1040,6 +1044,7 @@
           ];
           await saveReadingsToServer();
         }
+        saveAppState();
       } catch (error) {
         console.error('Failed to load readings:', error);
         // Fallback to localStorage or defaults
@@ -1080,6 +1085,78 @@
         });
         const menuContainer = document.querySelector('.menu-container').outerHTML;
         document.querySelector('.top-info').innerHTML = `Last reading<br />${timeStr}` + menuContainer;
+      }
+    }
+
+    function loadAppState() {
+      const saved = localStorage.getItem(appState.storageKey);
+      if (!saved) return;
+      try {
+        const stored = JSON.parse(saved);
+
+        if (typeof stored.selectedWeight === 'number') appState.selectedWeight = stored.selectedWeight;
+        if (typeof stored.currentPressure === 'number') appState.currentPressure = stored.currentPressure;
+        if (typeof stored.iotConnected === 'boolean') appState.iotConnected = stored.iotConnected;
+        if (typeof stored.isLoggedIn === 'boolean') appState.isLoggedIn = stored.isLoggedIn;
+        if (stored.userName) appState.userName = stored.userName;
+        if (stored.userEmail) appState.userEmail = stored.userEmail;
+        if (typeof stored.darkMode === 'boolean') appState.darkMode = stored.darkMode;
+        if (stored.settings) appState.settings = { ...appState.settings, ...stored.settings };
+        if (Array.isArray(stored.readings)) {
+          appState.readings = stored.readings.map(r => ({ ...r, date: new Date(r.date) }));
+        }
+      } catch (error) {
+        console.warn('Failed to restore saved app state', error);
+      }
+    }
+
+    function saveAppState() {
+      try {
+        const stored = {
+          selectedWeight: appState.selectedWeight,
+          currentPressure: appState.currentPressure,
+          isLoggedIn: appState.isLoggedIn,
+          userName: appState.userName,
+          userEmail: appState.userEmail,
+          darkMode: appState.darkMode,
+          iotConnected: appState.iotConnected,
+          settings: appState.settings,
+          readings: appState.readings.map(r => ({ ...r, date: r.date.toISOString() }))
+        };
+        localStorage.setItem(appState.storageKey, JSON.stringify(stored));
+      } catch (error) {
+        console.warn('Failed to save app state', error);
+      }
+    }
+
+    function renderHistory() {
+      const history = document.getElementById('history');
+      history.innerHTML = '';
+
+      appState.readings.forEach(reading => {
+        const item = document.createElement('div');
+        item.className = 'history-item';
+        const timeStr = reading.date.toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          meridiem: 'short'
+        });
+        item.innerHTML = `
+          <div><b>${reading.pressure.toFixed(2)} bar</b><br /><small>${timeStr}</small></div>
+          <span class="delete-btn" onclick="deleteReading(this)">×</span>`;
+        history.appendChild(item);
+      });
+
+      const span = document.querySelector('.history-box').closest('section').querySelector('.section-title span');
+      if (span) span.innerText = appState.readings.length + ' entries';
+    }
+
+    function restoreSelectedCylinder() {
+      const card = Array.from(document.querySelectorAll('.cylinder-card')).find(c => c.innerText.includes(appState.selectedWeight + ' kg'));
+      if (card) {
+        selectCylinder(card, appState.selectedWeight);
       }
     }
 
@@ -1204,9 +1281,23 @@
 
     // Daily Usage Generator
     function generateDailyUsage() {
-      const days = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
       const dailyUsage = document.getElementById('dailyUsage');
+      const totalSpan = document.querySelector('.usage-box p span');
+
+      if (!appState.iotConnected) {
+        dailyUsage.innerHTML = `
+          <div class="daily-row">
+            <span>—</span>
+            <div class="progress"><div style="width:0%"></div></div>
+            <span>null</span>
+          </div>`;
+        if (totalSpan) totalSpan.innerText = 'null';
+        return;
+      }
+
+      const days = ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
       let totalUsage = 0;
+      dailyUsage.innerHTML = '';
 
       days.forEach(day => {
         const usage = Math.random() * 0.025;
@@ -1220,8 +1311,6 @@
           </div>`;
       });
 
-      // Update total usage
-      const totalSpan = document.querySelector('.usage-box p span');
       if (totalSpan) totalSpan.innerText = totalUsage.toFixed(3) + ' kg total';
     }
 
