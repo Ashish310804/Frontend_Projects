@@ -279,6 +279,304 @@
       font-size: 12px;
     }
 
+    /* Menu Styles */
+    .menu-container {
+      position: relative;
+    }
+
+    .menu-btn {
+      background: white;
+      border: 1px solid #ccc;
+      padding: 8px 14px;
+      border-radius: 3px;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+    }
+
+    .menu-btn:hover {
+      background: #f5f5f5;
+    }
+
+    .menu-dropdown {
+      position: absolute;
+      top: 40px;
+      right: 0;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      min-width: 240px;
+      z-index: 1000;
+      display: none;
+      overflow: hidden;
+    }
+
+    .menu-dropdown.active {
+      display: block;
+    }
+
+    .menu-item {
+      padding: 12px 16px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: background 0.2s;
+    }
+
+    .menu-item:last-child {
+      border-bottom: none;
+    }
+
+    .menu-item:hover {
+      background: #f9f9f9;
+    }
+
+    .menu-item.divider {
+      border-bottom: 1px solid #ddd;
+      padding: 0;
+      margin: 4px 0;
+      min-height: 1px;
+      cursor: default;
+    }
+
+    .menu-item.divider:hover {
+      background: white;
+    }
+
+    .toggle-switch {
+      width: 40px;
+      height: 22px;
+      background: #ccc;
+      border-radius: 11px;
+      position: relative;
+      cursor: pointer;
+      transition: background 0.3s;
+      margin-left: auto;
+    }
+
+    .toggle-switch.active {
+      background: #2c9b65;
+    }
+
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      background: white;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      transition: left 0.3s;
+    }
+
+    .toggle-switch.active::after {
+      left: 20px;
+    }
+
+    .user-section {
+      padding: 12px 16px;
+      border-bottom: 1px solid #eee;
+      background: #f9f9f9;
+    }
+
+    .user-name {
+      font-weight: bold;
+      color: #222;
+      font-size: 13px;
+    }
+
+    .user-email {
+      color: #777;
+      font-size: 11px;
+      margin-top: 2px;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 6px;
+      padding: 24px;
+      max-width: 400px;
+      width: 90%;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    }
+
+    .modal-header {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 16px;
+      color: #222;
+    }
+
+    .modal-input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+
+    .modal-input:focus {
+      outline: none;
+      border-color: #ef2b2b;
+      box-shadow: 0 0 0 2px rgba(239, 43, 43, 0.1);
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+
+    .modal-btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: all 0.2s;
+    }
+
+    .modal-btn-primary {
+      background: #ef2b2b;
+      color: white;
+    }
+
+    .modal-btn-primary:hover {
+      background: #d62a2a;
+    }
+
+    .modal-btn-secondary {
+      background: #eee;
+      color: #222;
+    }
+
+    .modal-btn-secondary:hover {
+      background: #ddd;
+    }
+
+    /* Dark Mode */
+    body.dark-mode {
+      background: #1a1a1a;
+      color: #e0e0e0;
+    }
+
+    body.dark-mode header {
+      border-bottom-color: #333;
+    }
+
+    body.dark-mode section {
+      background: #222;
+      border-color: #333;
+    }
+
+    body.dark-mode .section-title {
+      border-bottom-color: #333;
+    }
+
+    body.dark-mode .cylinder-card {
+      border-color: #444;
+      background: #2a2a2a;
+      color: #e0e0e0;
+    }
+
+    body.dark-mode .cylinder-card.active {
+      background: #3d1111;
+      border-color: #ef2b2b;
+    }
+
+    body.dark-mode .gauge {
+      border-color: #2c9b65;
+    }
+
+    body.dark-mode .status-details {
+      color: #e0e0e0;
+    }
+
+    body.dark-mode .metric-label {
+      color: #aaa;
+    }
+
+    body.dark-mode .alert-card {
+      background: #2a2a2a;
+      border-color: #333;
+    }
+
+    body.dark-mode .bars {
+      background: linear-gradient(#222, #1a1a1a);
+    }
+
+    body.dark-mode .progress {
+      background: #333;
+    }
+
+    body.dark-mode form input {
+      background: #2a2a2a;
+      border-color: #444;
+      color: #e0e0e0;
+    }
+
+    body.dark-mode .menu-dropdown {
+      background: #2a2a2a;
+      border-color: #444;
+    }
+
+    body.dark-mode .menu-item {
+      border-color: #333;
+      color: #e0e0e0;
+    }
+
+    body.dark-mode .menu-item:hover {
+      background: #333;
+    }
+
+    body.dark-mode .user-section {
+      background: #333;
+      border-color: #444;
+    }
+
+    body.dark-mode .modal {
+      background: #222;
+      color: #e0e0e0;
+    }
+
+    body.dark-mode .modal-input {
+      background: #333;
+      border-color: #444;
+      color: #e0e0e0;
+    }
+
+    body.dark-mode footer {
+      border-color: #333;
+      color: #aaa;
+    }
+
     @media (max-width: 760px) {
       .cylinder-grid,
       .metrics-grid,
@@ -303,7 +601,37 @@
       </div>
       <div class="top-info">
         Last reading<br />Apr 24, 10:58 AM
-        <button class="signin">Sign in</button>
+        <div class="menu-container">
+          <button class="menu-btn" onclick="toggleMenu()">☰</button>
+          <div class="menu-dropdown" id="menuDropdown">
+            <div class="user-section" id="userSection" style="display:none;">
+              <div class="user-name" id="userName">Guest User</div>
+              <div class="user-email" id="userEmail">guest@example.com</div>
+            </div>
+            <div id="signInItem" class="menu-item" onclick="openSignInModal()">
+              <span>🔐</span>
+              <span>Sign in</span>
+            </div>
+            <div id="signOutItem" class="menu-item" onclick="signOut()" style="display:none;">
+              <span>🚪</span>
+              <span>Sign out</span>
+            </div>
+            <div class="menu-item divider"></div>
+            <div class="menu-item" onclick="toggleDarkMode()">
+              <span>🌙</span>
+              <span>Dark mode</span>
+              <div class="toggle-switch" id="darkModeToggle"></div>
+            </div>
+            <div class="menu-item" onclick="openSettingsModal()">
+              <span>⚙️</span>
+              <span>Settings</span>
+            </div>
+            <div class="menu-item" onclick="openAboutModal()">
+              <span>ℹ️</span>
+              <span>About</span>
+            </div>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -416,6 +744,71 @@
     </footer>
   </div>
 
+  <!-- Sign In Modal -->
+  <div class="modal-overlay" id="signInModal">
+    <div class="modal">
+      <div class="modal-header">Sign In to Saathi</div>
+      <input type="email" class="modal-input" id="emailInput" placeholder="Email address" />
+      <input type="password" class="modal-input" id="passwordInput" placeholder="Password" />
+      <div class="modal-buttons">
+        <button class="modal-btn modal-btn-secondary" onclick="closeModal('signInModal')">Cancel</button>
+        <button class="modal-btn modal-btn-primary" onclick="handleSignIn()">Sign In</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal">
+      <div class="modal-header">Settings</div>
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 13px; font-weight: bold; margin-bottom: 8px;">Notification Frequency</label>
+        <select class="modal-input" id="notificationFreq" style="cursor: pointer;">
+          <option value="hourly">Hourly</option>
+          <option value="daily" selected>Daily</option>
+          <option value="weekly">Weekly</option>
+          <option value="never">Never</option>
+        </select>
+      </div>
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 13px; font-weight: bold; margin-bottom: 8px;">Leak Alert Threshold (bar/hour)</label>
+        <input type="number" class="modal-input" id="leakThreshold" value="2.0" step="0.1" />
+      </div>
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 13px; font-weight: bold; margin-bottom: 8px;">Low Pressure Alert (bar)</label>
+        <input type="number" class="modal-input" id="lowPressureAlert" value="5.0" step="0.1" />
+      </div>
+      <div class="modal-buttons">
+        <button class="modal-btn modal-btn-secondary" onclick="closeModal('settingsModal')">Cancel</button>
+        <button class="modal-btn modal-btn-primary" onclick="saveSettings()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- About Modal -->
+  <div class="modal-overlay" id="aboutModal">
+    <div class="modal">
+      <div class="modal-header">About Saathi</div>
+      <div style="font-size: 13px; line-height: 1.6; color: #666;">
+        <p><b>Saathi v1.0</b></p>
+        <p style="margin-top: 12px;">A personal LPG cylinder tracker that helps you:</p>
+        <ul style="margin: 12px 0 12px 20px;">
+          <li>Log pressure readings</li>
+          <li>Track daily kg usage</li>
+          <li>Get leak alerts</li>
+          <li>Forecast when your cylinder will run out</li>
+        </ul>
+        <p style="margin-top: 12px; border-top: 1px solid #eee; padding-top: 12px;">
+          Created by <b>Ashish Dawadi</b><br />
+          <a href="#" style="color: #ef2b2b; text-decoration: none;">LinkedIn Profile</a>
+        </p>
+      </div>
+      <div class="modal-buttons">
+        <button class="modal-btn modal-btn-primary" onclick="closeModal('aboutModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     // State Management
     let appState = {
@@ -427,7 +820,16 @@
         { pressure: 14.00, date: new Date(Date.now() - 1440 * 60000) },
         { pressure: 14.10, date: new Date(Date.now() - 1440 * 60000) },
         { pressure: 12.90, date: new Date(Date.now() - 2880 * 60000) }
-      ]
+      ],
+      isLoggedIn: false,
+      userName: 'Guest User',
+      userEmail: 'guest@example.com',
+      darkMode: localStorage.getItem('darkMode') === 'true',
+      settings: {
+        notificationFreq: localStorage.getItem('notificationFreq') || 'daily',
+        leakThreshold: parseFloat(localStorage.getItem('leakThreshold')) || 2.0,
+        lowPressureAlert: parseFloat(localStorage.getItem('lowPressureAlert')) || 5.0
+      }
     };
 
     // Initialize
@@ -437,6 +839,140 @@
       updateGaugeDisplay();
       attachHistoryDeleteHandlers();
       generatePressureChart();
+      
+      // Apply dark mode if enabled
+      if (appState.darkMode) {
+        document.body.classList.add('dark-mode');
+        document.getElementById('darkModeToggle').classList.add('active');
+      }
+
+      // Close menu when clicking outside
+      document.addEventListener('click', function(event) {
+        const menu = document.getElementById('menuDropdown');
+        const menuBtn = document.querySelector('.menu-btn');
+        if (!menu.contains(event.target) && !menuBtn.contains(event.target)) {
+          menu.classList.remove('active');
+        }
+      });
+    }
+
+    // Menu Toggle
+    function toggleMenu() {
+      const menu = document.getElementById('menuDropdown');
+      menu.classList.toggle('active');
+    }
+
+    // Close Menu
+    function closeMenu() {
+      document.getElementById('menuDropdown').classList.remove('active');
+    }
+
+    // Modal Functions
+    function openModal(modalId) {
+      document.getElementById(modalId).classList.add('active');
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('active');
+    }
+
+    function openSignInModal() {
+      openModal('signInModal');
+      closeMenu();
+    }
+
+    function openSettingsModal() {
+      document.getElementById('notificationFreq').value = appState.settings.notificationFreq;
+      document.getElementById('leakThreshold').value = appState.settings.leakThreshold;
+      document.getElementById('lowPressureAlert').value = appState.settings.lowPressureAlert;
+      openModal('settingsModal');
+      closeMenu();
+    }
+
+    function openAboutModal() {
+      openModal('aboutModal');
+      closeMenu();
+    }
+
+    // Sign In Handler
+    function handleSignIn() {
+      const email = document.getElementById('emailInput').value.trim();
+      const password = document.getElementById('passwordInput').value.trim();
+
+      if (!email || !password) {
+        alert('Please enter email and password');
+        return;
+      }
+
+      if (!email.includes('@')) {
+        alert('Please enter a valid email address');
+        return;
+      }
+
+      // Simulate sign in
+      appState.isLoggedIn = true;
+      appState.userName = email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1);
+      appState.userEmail = email;
+
+      // Update UI
+      updateAuthUI();
+      
+      document.getElementById('emailInput').value = '';
+      document.getElementById('passwordInput').value = '';
+      closeModal('signInModal');
+      
+      alert('Signed in successfully as ' + appState.userEmail);
+    }
+
+    // Sign Out Handler
+    function signOut() {
+      appState.isLoggedIn = false;
+      appState.userName = 'Guest User';
+      appState.userEmail = 'guest@example.com';
+      updateAuthUI();
+      closeMenu();
+      alert('Signed out successfully');
+    }
+
+    // Update Auth UI
+    function updateAuthUI() {
+      const userSection = document.getElementById('userSection');
+      const signInItem = document.getElementById('signInItem');
+      const signOutItem = document.getElementById('signOutItem');
+
+      if (appState.isLoggedIn) {
+        userSection.style.display = 'block';
+        signInItem.style.display = 'none';
+        signOutItem.style.display = 'flex';
+        document.getElementById('userName').innerText = appState.userName;
+        document.getElementById('userEmail').innerText = appState.userEmail;
+      } else {
+        userSection.style.display = 'none';
+        signInItem.style.display = 'flex';
+        signOutItem.style.display = 'none';
+      }
+    }
+
+    // Dark Mode Toggle
+    function toggleDarkMode() {
+      appState.darkMode = !appState.darkMode;
+      document.body.classList.toggle('dark-mode');
+      document.getElementById('darkModeToggle').classList.toggle('active');
+      localStorage.setItem('darkMode', appState.darkMode);
+    }
+
+    // Save Settings
+    function saveSettings() {
+      appState.settings.notificationFreq = document.getElementById('notificationFreq').value;
+      appState.settings.leakThreshold = parseFloat(document.getElementById('leakThreshold').value);
+      appState.settings.lowPressureAlert = parseFloat(document.getElementById('lowPressureAlert').value);
+
+      localStorage.setItem('notificationFreq', appState.settings.notificationFreq);
+      localStorage.setItem('leakThreshold', appState.settings.leakThreshold);
+      localStorage.setItem('lowPressureAlert', appState.settings.lowPressureAlert);
+
+      closeModal('settingsModal');
+      alert('Settings saved successfully!');
     }
 
     // Daily Usage Generator
@@ -557,7 +1093,7 @@
       }
 
       const avgDrop = pressureDrops.reduce((a, b) => a + b, 0) / pressureDrops.length;
-      const hasLeak = avgDrop > 2.0; // More than 2 bar drop indicates leak
+      const hasLeak = avgDrop > appState.settings.leakThreshold;
 
       const leakStatus = document.querySelector('.alert-card.green');
       if (leakStatus) {
