@@ -818,12 +818,7 @@
       selectedWeight: 14.2,
       currentPressure: 12.00,
       maxPressure: 15.0,
-      readings: (JSON.parse(localStorage.getItem('readings')) || [
-        { pressure: 12.00, date: new Date(Date.now() - 14 * 60000) },
-        { pressure: 14.00, date: new Date(Date.now() - 1440 * 60000) },
-        { pressure: 14.10, date: new Date(Date.now() - 1440 * 60000) },
-        { pressure: 12.90, date: new Date(Date.now() - 2880 * 60000) }
-      ]).map(r => ({ ...r, date: new Date(r.date) })),
+      readings: [], // will load from server
       isLoggedIn: false,
       userName: 'Guest User',
       userEmail: 'guest@example.com',
@@ -836,7 +831,8 @@
     };
 
     // Initialize
-    function initialize() {
+    async function initialize() {
+      await loadReadings();
       document.getElementById('dateInput').value = new Date().toISOString().slice(0, 16);
       generateDailyUsage();
       updateGaugeDisplay();
@@ -860,6 +856,49 @@
       });
     }
 
+    // Load Readings from Server
+    async function loadReadings() {
+      try {
+        const response = await fetch('/api/readings');
+        const readings = await response.json();
+        appState.readings = readings.map(r => ({ ...r, date: new Date(r.date) }));
+        if (appState.readings.length === 0) {
+          // Add default readings if none
+          appState.readings = [
+            { pressure: 12.00, date: new Date(Date.now() - 14 * 60000) },
+            { pressure: 14.00, date: new Date(Date.now() - 1440 * 60000) },
+            { pressure: 14.10, date: new Date(Date.now() - 1440 * 60000) },
+            { pressure: 12.90, date: new Date(Date.now() - 2880 * 60000) }
+          ];
+          await saveReadingsToServer();
+        }
+      } catch (error) {
+        console.error('Failed to load readings:', error);
+        // Fallback to localStorage or defaults
+        appState.readings = (JSON.parse(localStorage.getItem('readings')) || [
+          { pressure: 12.00, date: new Date(Date.now() - 14 * 60000) },
+          { pressure: 14.00, date: new Date(Date.now() - 1440 * 60000) },
+          { pressure: 14.10, date: new Date(Date.now() - 1440 * 60000) },
+          { pressure: 12.90, date: new Date(Date.now() - 2880 * 60000) }
+        ]).map(r => ({ ...r, date: new Date(r.date) }));
+      }
+    }
+
+    // Save Readings to Server
+    async function saveReadingsToServer() {
+      for (const reading of appState.readings) {
+        try {
+          await fetch('/api/readings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pressure: reading.pressure, date: reading.date.toISOString() })
+          });
+        } catch (error) {
+          console.error('Failed to save reading:', error);
+        }
+      }
+    }
+
     // Update Last Reading Display
     function updateLastReadingDisplay() {
       if (appState.readings.length > 0) {
@@ -874,12 +913,6 @@
         const menuContainer = document.querySelector('.menu-container').outerHTML;
         document.querySelector('.top-info').innerHTML = `Last reading<br />${timeStr}` + menuContainer;
       }
-    }
-
-    // Save Readings to Local Storage
-    function saveReadings() {
-      const readingsToSave = appState.readings.map(r => ({ ...r, date: r.date.toISOString() }));
-      localStorage.setItem('readings', JSON.stringify(readingsToSave));
     }
 
     // Menu Toggle
@@ -1165,7 +1198,7 @@
     }
 
     // Save Reading
-    function saveReading(event) {
+    async function saveReading(event) {
       event.preventDefault();
       const pressure = parseFloat(document.getElementById('pressureInput').value);
       const date = new Date(document.getElementById('dateInput').value);
@@ -1178,6 +1211,17 @@
       appState.currentPressure = pressure;
       appState.readings.unshift({ pressure, date });
 
+      // Save to server
+      try {
+        await fetch('/api/readings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pressure, date: date.toISOString() })
+        });
+      } catch (error) {
+        console.error('Failed to save reading:', error);
+      }
+
       // Add to history
       const history = document.getElementById('history');
       const item = document.createElement('div');
@@ -1198,13 +1242,12 @@
 
       updateGaugeDisplay();
       generatePressureChart();
-      saveReadings();
       updateLastReadingDisplay();
       alert('Reading saved successfully!');
     }
 
     // Add Current Reading
-    function addCurrentReading() {
+    async function addCurrentReading() {
       const pressure = parseFloat(document.getElementById('pressureInput').value);
       const date = new Date();
 
@@ -1216,6 +1259,17 @@
       appState.currentPressure = pressure;
       appState.readings.unshift({ pressure, date });
 
+      // Save to server
+      try {
+        await fetch('/api/readings', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pressure, date: date.toISOString() })
+        });
+      } catch (error) {
+        console.error('Failed to save reading:', error);
+      }
+
       // Add to history
       const history = document.getElementById('history');
       const item = document.createElement('div');
@@ -1236,13 +1290,12 @@
 
       updateGaugeDisplay();
       generatePressureChart();
-      saveReadings();
       updateLastReadingDisplay();
       alert('Current reading added successfully!');
     }
 
     // Delete Reading
-    function deleteReading(btn) {
+    async function deleteReading(btn) {
       const item = btn.closest('.history-item');
       const pressureText = item.querySelector('b').innerText;
       const pressureValue = parseFloat(pressureText);
@@ -1250,6 +1303,11 @@
       const index = appState.readings.findIndex(r => Math.abs(r.pressure - pressureValue) < 0.01);
       if (index > -1) {
         appState.readings.splice(index, 1);
+        try {
+          await fetch(`/api/readings/${index}`, { method: 'DELETE' });
+        } catch (error) {
+          console.error('Failed to delete reading:', error);
+        }
       }
 
       item.remove();
@@ -1258,7 +1316,6 @@
       
       updateGaugeDisplay();
       generatePressureChart();
-      saveReadings();
       updateLastReadingDisplay();
     }
 
@@ -1303,7 +1360,7 @@
     function attachHistoryDeleteHandlers() {
       document.querySelectorAll('.history-item span').forEach((span, index) => {
         span.style.cursor = 'pointer';
-        span.onclick = function() {
+        span.onclick = async function() {
           const item = this.closest('.history-item');
           const pressureText = item.querySelector('b').innerText;
           const pressureValue = parseFloat(pressureText);
@@ -1311,6 +1368,11 @@
           const historyIndex = appState.readings.findIndex(r => Math.abs(r.pressure - pressureValue) < 0.01);
           if (historyIndex > -1) {
             appState.readings.splice(historyIndex, 1);
+            try {
+              await fetch(`/api/readings/${historyIndex}`, { method: 'DELETE' });
+            } catch (error) {
+              console.error('Failed to delete reading:', error);
+            }
           }
           
           item.remove();
@@ -1318,7 +1380,6 @@
           if (span) span.innerText = appState.readings.length + ' entries';
           updateGaugeDisplay();
           generatePressureChart();
-          saveReadings();
           updateLastReadingDisplay();
         };
       });
