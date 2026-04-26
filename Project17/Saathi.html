@@ -259,6 +259,38 @@
       transition: background 0.3s ease, border-color 0.3s ease;
     }
 
+    .line-chart {
+      overflow-x: auto;
+      overflow-y: hidden;
+      max-width: 100%;
+    }
+
+    .line-chart svg {
+      width: 100%;
+      height: 150px;
+      min-width: 400px;
+      transition: all 0.4s ease;
+    }
+
+    .line-chart::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .line-chart::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+
+    .line-chart::-webkit-scrollbar-thumb {
+      background: #ccc;
+      border-radius: 4px;
+      transition: background 0.2s ease;
+    }
+
+    .line-chart::-webkit-scrollbar-thumb:hover {
+      background: #999;
+    }
+
     .bars {
       display: grid;
       grid-template-columns: repeat(12, 1fr);
@@ -920,15 +952,20 @@
       </section>
 
       <section>
-        <div class="section-title">Pressure over time</div>
-        <div class="content line-chart">
-          <svg viewBox="0 0 400 150">
-            <line x1="30" y1="120" x2="380" y2="120" stroke="#ddd" />
-            <line x1="30" y1="80" x2="380" y2="80" stroke="#eee" />
-            <line x1="30" y1="40" x2="380" y2="40" stroke="#eee" />
-            <polyline points="30,75 120,55 230,55 330,58 380,82" fill="none" stroke="#ef2b2b" stroke-width="3" />
-            <circle cx="120" cy="55" r="4" fill="#ef2b2b" />
-            <circle cx="230" cy="55" r="4" fill="#ef2b2b" />
+        <div class="section-title">Pressure over time <span id="chartReadingCount" style="color: #777; font-weight: normal; font-size: 12px;">4 readings</span></div>
+        <div class="content line-chart" id="lineChartContainer">
+          <svg id="pressureChart" viewBox="0 0 400 150" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" style="stop-color:#ef2b2b;stop-opacity:0.1" />
+                <stop offset="100%" style="stop-color:#ef2b2b;stop-opacity:0" />
+              </linearGradient>
+            </defs>
+            <line x1="30" y1="120" x2="380" y2="120" stroke="#ddd" stroke-width="1" />
+            <line x1="30" y1="80" x2="380" y2="80" stroke="#eee" stroke-width="1" />
+            <line x1="30" y1="40" x2="380" y2="40" stroke="#eee" stroke-width="1" />
+            <polyline id="chartLine" points="30,75 120,55 230,55 330,58 380,82" fill="none" stroke="#ef2b2b" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" />
+            <polygon id="chartArea" points="30,75 120,55 230,55 330,58 380,82 380,120 30,120" fill="url(#chartGradient)" />
           </svg>
         </div>
       </section>
@@ -1641,23 +1678,53 @@
       const maxPressure = Math.max(...readings.map(r => r.pressure));
       const range = maxPressure - minPressure || 1;
       
+      // Calculate dynamic viewBox width based on number of readings
+      // Minimum width is 400, increases by 100 for every 5 readings beyond 4
+      const minReadingsForScroll = 5;
+      let viewBoxWidth = 400;
+      if (readings.length > minReadingsForScroll) {
+        viewBoxWidth = 400 + ((readings.length - minReadingsForScroll) * 70);
+      }
+      
       let points = '';
+      let polygonPoints = '';
+      
       readings.forEach((reading, index) => {
-        const x = 30 + (index / (readings.length - 1)) * 350;
+        const x = 30 + (index / Math.max(readings.length - 1, 1)) * (viewBoxWidth - 60);
         const y = 120 - ((reading.pressure - minPressure) / range) * 80;
         points += `${x},${y} `;
+        if (index === 0) {
+          polygonPoints = `${x},${y} `;
+        } else if (index === readings.length - 1) {
+          polygonPoints += `${x},${y} ${viewBoxWidth - 30},120 30,120`;
+        } else {
+          polygonPoints += `${x},${y} `;
+        }
       });
 
-      const svg = document.querySelector('.line-chart svg');
-      const polyline = svg.querySelector('polyline');
+      const svg = document.getElementById('pressureChart');
+      svg.setAttribute('viewBox', `0 0 ${viewBoxWidth} 150`);
+      
+      // Update grid lines
+      const lines = svg.querySelectorAll('line');
+      if (lines.length >= 1) {
+        lines[0].setAttribute('x2', viewBoxWidth - 30);
+        lines[1].setAttribute('x2', viewBoxWidth - 30);
+        lines[2].setAttribute('x2', viewBoxWidth - 30);
+      }
+      
+      const polyline = svg.getElementById('chartLine');
       polyline.setAttribute('points', points.trim());
+      
+      const polygon = svg.getElementById('chartArea');
+      polygon.setAttribute('points', polygonPoints);
 
       // Remove old circles
       svg.querySelectorAll('circle[id^="reading"]').forEach(c => c.remove());
 
-      // Add new circles
+      // Add new circles with smooth appearance
       readings.forEach((reading, index) => {
-        const x = 30 + (index / (readings.length - 1)) * 350;
+        const x = 30 + (index / Math.max(readings.length - 1, 1)) * (viewBoxWidth - 60);
         const y = 120 - ((reading.pressure - minPressure) / range) * 80;
         const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         circle.setAttribute('cx', x);
@@ -1665,8 +1732,23 @@
         circle.setAttribute('r', 4);
         circle.setAttribute('fill', '#ef2b2b');
         circle.setAttribute('id', 'reading-' + index);
+        circle.style.transition = 'all 0.3s ease';
         svg.appendChild(circle);
       });
+      
+      // Update chart reading count
+      const countSpan = document.getElementById('chartReadingCount');
+      if (countSpan) {
+        countSpan.innerText = readings.length + ' reading' + (readings.length !== 1 ? 's' : '');
+      }
+      
+      // Auto-scroll to the right to show latest data
+      const chartContainer = document.getElementById('lineChartContainer');
+      if (chartContainer) {
+        setTimeout(() => {
+          chartContainer.scrollLeft = chartContainer.scrollWidth;
+        }, 50);
+      }
     }
 
     // Attach delete handlers to existing history items
