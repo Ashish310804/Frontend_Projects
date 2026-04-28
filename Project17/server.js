@@ -10,7 +10,11 @@ const PORT = 3000;
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname), {
+  setHeaders: (res, path) => {
+    res.set('Cache-Control', 'no-cache');
+  }
+}));
 
 // Data file path
 const dataFile = path.join(__dirname, 'readings.json');
@@ -74,6 +78,7 @@ app.delete('/api/readings/:index', (req, res) => {
 
 // Serve the HTML file
 app.get('/', (req, res) => {
+  res.set('Cache-Control', 'no-cache');
   res.sendFile(path.join(__dirname, 'Saathi.html'));
 });
 
