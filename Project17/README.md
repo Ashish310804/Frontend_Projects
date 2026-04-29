@@ -26,6 +26,19 @@ A web-based application for monitoring LPG cylinder pressure, tracking usage, an
 
 3. Open your browser and go to `http://localhost:3000`
 
+## MongoDB Setup
+
+Create a `.env` file in the `Project17` folder with the following values:
+
+```env
+MONGODB_URI=mongodb+srv://<username>:<password>@<cluster-url>/
+MONGODB_DB=saathi
+MONGODB_COLLECTION=readings
+PORT=3000
+```
+
+If `MONGODB_URI` is not set, the app will fall back to the existing `readings.json` storage file.
+
 ## API Endpoints
 
 - `GET /api/readings` - Get all pressure readings
