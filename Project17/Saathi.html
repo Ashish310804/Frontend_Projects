@@ -1042,8 +1042,24 @@
         <label style="display: block; font-size: 13px; font-weight: bold; margin-bottom: 8px;">Notification Frequency</label>
         <select class="modal-input" id="notificationFreq" style="cursor: pointer;">
           <option value="hourly">Hourly</option>
-          <option value="daily" selected>Daily</option>
+          <option value="daily">Daily</option>
           <option value="weekly">Weekly</option>
+          <option value="never">Never</option>
+        </select>
+      </div>
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 13px; font-weight: bold; margin-bottom: 8px;">Auto-sync readings</label>
+        <select class="modal-input" id="autoSync" style="cursor: pointer;">
+          <option value="true">Enabled</option>
+          <option value="false">Disabled</option>
+        </select>
+      </div>
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 13px; font-weight: bold; margin-bottom: 8px;">Cylinder refill reminder</label>
+        <select class="modal-input" id="refillReminder" style="cursor: pointer;">
+          <option value="3 days">3 days before</option>
+          <option value="7 days">7 days before</option>
+          <option value="14 days">14 days before</option>
           <option value="never">Never</option>
         </select>
       </div>
@@ -1093,6 +1109,7 @@
       currentPressure: 12.00,
       maxPressure: 15.0,
       readings: [], // will load from server
+      storageKey: 'saathiAppState',
       isLoggedIn: false,
       userName: 'Guest User',
       userEmail: 'guest@example.com',
@@ -1100,6 +1117,8 @@
       iotConnected: false,
       settings: {
         notificationFreq: localStorage.getItem('notificationFreq') || 'daily',
+        autoSync: localStorage.getItem('autoSync') === 'true',
+        refillReminder: localStorage.getItem('refillReminder') || '7 days',
         leakThreshold: parseFloat(localStorage.getItem('leakThreshold')) || 2.0,
         lowPressureAlert: parseFloat(localStorage.getItem('lowPressureAlert')) || 5.0
       }
@@ -1296,6 +1315,8 @@
 
     function openSettingsModal() {
       document.getElementById('notificationFreq').value = appState.settings.notificationFreq;
+      document.getElementById('autoSync').value = appState.settings.autoSync ? 'true' : 'false';
+      document.getElementById('refillReminder').value = appState.settings.refillReminder;
       document.getElementById('leakThreshold').value = appState.settings.leakThreshold;
       document.getElementById('lowPressureAlert').value = appState.settings.lowPressureAlert;
       openModal('settingsModal');
@@ -1377,10 +1398,14 @@
     // Save Settings
     function saveSettings() {
       appState.settings.notificationFreq = document.getElementById('notificationFreq').value;
+      appState.settings.autoSync = document.getElementById('autoSync').value === 'true';
+      appState.settings.refillReminder = document.getElementById('refillReminder').value;
       appState.settings.leakThreshold = parseFloat(document.getElementById('leakThreshold').value);
       appState.settings.lowPressureAlert = parseFloat(document.getElementById('lowPressureAlert').value);
 
       localStorage.setItem('notificationFreq', appState.settings.notificationFreq);
+      localStorage.setItem('autoSync', appState.settings.autoSync);
+      localStorage.setItem('refillReminder', appState.settings.refillReminder);
       localStorage.setItem('leakThreshold', appState.settings.leakThreshold);
       localStorage.setItem('lowPressureAlert', appState.settings.lowPressureAlert);
 
