@@ -622,6 +622,38 @@
       box-shadow: 0 0 0 2px rgba(239, 43, 43, 0.1);
     }
 
+    .modal-checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: #444;
+      margin-bottom: 12px;
+    }
+
+    .modal-checkbox-row input {
+      width: 16px;
+      height: 16px;
+      accent-color: #ef2b2b;
+    }
+
+    .auth-message {
+      margin-bottom: 14px;
+      font-size: 13px;
+      color: #555;
+      line-height: 1.5;
+    }
+
+    .modal-input.invalid {
+      border-color: #ef2b2b;
+      background: #fff5f5;
+    }
+
+    .modal-btn[disabled] {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
     .modal-buttons {
       display: flex;
       gap: 10px;
@@ -1025,11 +1057,15 @@
   <div class="modal-overlay" id="signInModal">
     <div class="modal">
       <div class="modal-header">Sign In to Saathi</div>
+      <div class="auth-message" id="signInMessage">Enter your email and password to sync readings and personalize your dashboard.</div>
       <input type="email" class="modal-input" id="emailInput" placeholder="Email address" />
       <input type="password" class="modal-input" id="passwordInput" placeholder="Password" />
+      <label class="modal-checkbox-row">
+        <input type="checkbox" id="rememberMeCheckbox" /> Remember me
+      </label>
       <div class="modal-buttons">
         <button class="modal-btn modal-btn-secondary" onclick="closeModal('signInModal')">Cancel</button>
-        <button class="modal-btn modal-btn-primary" onclick="handleSignIn()">Sign In</button>
+        <button class="modal-btn modal-btn-primary" id="signInButton" onclick="handleSignIn()">Sign In</button>
       </div>
     </div>
   </div>
@@ -1111,6 +1147,7 @@
       readings: [], // will load from server
       storageKey: 'saathiAppState',
       isLoggedIn: false,
+      rememberMe: false,
       userName: 'Guest User',
       userEmail: 'guest@example.com',
       darkMode: localStorage.getItem('darkMode') === 'true',
@@ -1136,6 +1173,7 @@
       attachHistoryDeleteHandlers();
       generatePressureChart();
       updateLastReadingDisplay();
+      updateAuthUI();
       
       // Apply dark mode if enabled
       if (appState.darkMode) {
@@ -1229,6 +1267,12 @@
         if (stored.userName) appState.userName = stored.userName;
         if (stored.userEmail) appState.userEmail = stored.userEmail;
         if (typeof stored.darkMode === 'boolean') appState.darkMode = stored.darkMode;
+        if (typeof stored.rememberMe === 'boolean') appState.rememberMe = stored.rememberMe;
+        if (!appState.rememberMe) {
+          appState.isLoggedIn = false;
+          appState.userName = 'Guest User';
+          appState.userEmail = 'guest@example.com';
+        }
         if (stored.settings) appState.settings = { ...appState.settings, ...stored.settings };
         if (Array.isArray(stored.readings)) {
           appState.readings = stored.readings.map(r => ({ ...r, date: new Date(r.date) }));
@@ -1244,6 +1288,7 @@
           selectedWeight: appState.selectedWeight,
           currentPressure: appState.currentPressure,
           isLoggedIn: appState.isLoggedIn,
+          rememberMe: appState.rememberMe,
           userName: appState.userName,
           userEmail: appState.userEmail,
           darkMode: appState.darkMode,
@@ -1255,6 +1300,10 @@
       } catch (error) {
         console.warn('Failed to save app state', error);
       }
+    }
+
+    function validateEmail(email) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
     }
 
     function renderHistory() {
@@ -1310,6 +1359,12 @@
 
     function openSignInModal() {
       openModal('signInModal');
+      document.getElementById('signInMessage').style.color = '#555';
+      document.getElementById('signInMessage').innerText = 'Enter your email and password to sync readings and personalize your dashboard.';
+      document.getElementById('signInButton').disabled = false;
+      document.getElementById('emailInput').classList.remove('invalid');
+      document.getElementById('passwordInput').classList.remove('invalid');
+      document.getElementById('rememberMeCheckbox').checked = false;
       closeMenu();
     }
 
@@ -1330,39 +1385,73 @@
 
     // Sign In Handler
     function handleSignIn() {
-      const email = document.getElementById('emailInput').value.trim();
-      const password = document.getElementById('passwordInput').value.trim();
+      const emailInput = document.getElementById('emailInput');
+      const passwordInput = document.getElementById('passwordInput');
+      const rememberCheckbox = document.getElementById('rememberMeCheckbox');
+      const signInMessage = document.getElementById('signInMessage');
+      const signInButton = document.getElementById('signInButton');
 
-      if (!email || !password) {
-        alert('Please enter email and password');
+      const email = emailInput.value.trim();
+      const password = passwordInput.value.trim();
+      const rememberMe = rememberCheckbox.checked;
+
+      emailInput.classList.remove('invalid');
+      passwordInput.classList.remove('invalid');
+      signInMessage.style.color = '#555';
+      signInMessage.innerText = 'Signing in...';
+      signInButton.disabled = true;
+
+      if (!email) {
+        emailInput.classList.add('invalid');
+        signInMessage.style.color = '#ef2b2b';
+        signInMessage.innerText = 'Email is required.';
+        signInButton.disabled = false;
         return;
       }
 
-      if (!email.includes('@')) {
-        alert('Please enter a valid email address');
+      if (!validateEmail(email)) {
+        emailInput.classList.add('invalid');
+        signInMessage.style.color = '#ef2b2b';
+        signInMessage.innerText = 'Please enter a valid email address.';
+        signInButton.disabled = false;
         return;
       }
 
-      // Simulate sign in
-      appState.isLoggedIn = true;
-      appState.userName = email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1);
-      appState.userEmail = email;
+      if (!password || password.length < 6) {
+        passwordInput.classList.add('invalid');
+        signInMessage.style.color = '#ef2b2b';
+        signInMessage.innerText = 'Password must be at least 6 characters long.';
+        signInButton.disabled = false;
+        return;
+      }
 
-      // Update UI
-      updateAuthUI();
-      
-      document.getElementById('emailInput').value = '';
-      document.getElementById('passwordInput').value = '';
-      closeModal('signInModal');
-      
-      alert('Signed in successfully as ' + appState.userEmail);
+      setTimeout(() => {
+        appState.isLoggedIn = true;
+        appState.rememberMe = rememberMe;
+        appState.userName = email.split('@')[0].charAt(0).toUpperCase() + email.split('@')[0].slice(1);
+        appState.userEmail = email;
+
+        saveAppState();
+
+        updateAuthUI();
+        signInMessage.style.color = '#2c9b65';
+        signInMessage.innerText = 'Signed in successfully!';
+        signInButton.disabled = false;
+        emailInput.value = '';
+        passwordInput.value = '';
+        rememberCheckbox.checked = false;
+        closeModal('signInModal');
+        alert('Signed in successfully as ' + appState.userEmail);
+      }, 700);
     }
 
     // Sign Out Handler
     function signOut() {
       appState.isLoggedIn = false;
+      appState.rememberMe = false;
       appState.userName = 'Guest User';
       appState.userEmail = 'guest@example.com';
+      saveAppState();
       updateAuthUI();
       closeMenu();
       alert('Signed out successfully');
@@ -1373,6 +1462,7 @@
       const userSection = document.getElementById('userSection');
       const signInItem = document.getElementById('signInItem');
       const signOutItem = document.getElementById('signOutItem');
+      const signInMessage = document.getElementById('signInMessage');
 
       if (appState.isLoggedIn) {
         userSection.style.display = 'block';
@@ -1380,10 +1470,18 @@
         signOutItem.style.display = 'flex';
         document.getElementById('userName').innerText = appState.userName;
         document.getElementById('userEmail').innerText = appState.userEmail;
+        if (signInMessage) {
+          signInMessage.style.color = '#2c9b65';
+          signInMessage.innerText = `You are signed in as ${appState.userEmail}.`;
+        }
       } else {
         userSection.style.display = 'none';
         signInItem.style.display = 'flex';
         signOutItem.style.display = 'none';
+        if (signInMessage) {
+          signInMessage.style.color = '#555';
+          signInMessage.innerText = 'Enter your email and password to sync readings and personalize your dashboard.';
+        }
       }
     }
 
@@ -1645,6 +1743,10 @@
       if (isNaN(pressure) || pressure < 0 || pressure > 20) {
         alert('Please enter a valid pressure value (0-20 bar)');
         return;
+      }
+
+      if (!appState.isLoggedIn) {
+        alert('Sign in to sync readings and keep them in your profile. Local history will still remain available.');
       }
 
       appState.currentPressure = pressure;
