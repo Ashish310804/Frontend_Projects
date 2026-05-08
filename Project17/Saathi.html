@@ -2600,8 +2600,178 @@
       }
     }
 
+    // Helper functions for chat actions
+    function selectCylinderBySize(size) {
+      const cylinders = document.querySelectorAll('.cylinder-card');
+      cylinders.forEach(card => card.classList.remove('active'));
+      
+      const targetCard = Array.from(cylinders).find(card => 
+        card.textContent.includes(size.toString())
+      );
+      if (targetCard) {
+        targetCard.classList.add('active');
+        selectCylinder(targetCard, size);
+      }
+    }
+
+    function clearAllReadings() {
+      if (confirm('Are you sure you want to clear all readings? This cannot be undone.')) {
+        appState.readings = [];
+        saveAppState();
+        renderHistory();
+        updateGaugeDisplay();
+        generatePressureChart();
+        updateLastReadingDisplay();
+      }
+    }
+
+    function addSimulatedReadings() {
+      const now = new Date();
+      const simulated = [];
+      for (let i = 0; i < 5; i++) {
+        const date = new Date(now.getTime() - (i * 2 * 60 * 60 * 1000)); // Every 2 hours
+        const pressure = 14.0 - (i * 0.5) + (Math.random() * 0.4 - 0.2); // Decreasing with noise
+        simulated.push({ pressure: Math.max(pressure, 0), date });
+      }
+      appState.readings = [...appState.readings, ...simulated];
+      saveAppState();
+      renderHistory();
+      updateGaugeDisplay();
+      generatePressureChart();
+      updateLastReadingDisplay();
+    }
+
     function generateBotResponse(userMessage) {
       const lowerMessage = userMessage.toLowerCase();
+      
+      // Action commands
+      if (lowerMessage.includes('add reading') || lowerMessage.includes('new reading')) {
+        setTimeout(() => {
+          document.getElementById('pressureInput').focus();
+          addChatMessage('Opening the "Add a reading" section for you...', 'bot');
+        }, 1000);
+        return 'Sure! Let me help you add a new pressure reading. 📊';
+      } else if (lowerMessage.includes('toggle dark') || lowerMessage.includes('dark mode on') || lowerMessage.includes('dark mode off')) {
+        setTimeout(() => {
+          toggleDarkMode();
+          addChatMessage('Dark mode toggled! 🌙', 'bot');
+        }, 500);
+        return 'Switching dark mode for you...';
+      } else if (lowerMessage.includes('open settings') || lowerMessage.includes('settings')) {
+        setTimeout(() => {
+          openSettingsModal();
+          addChatMessage('Settings panel opened! ⚙️', 'bot');
+        }, 500);
+        return 'Opening settings for you...';
+      } else if (lowerMessage.includes('export') || lowerMessage.includes('download')) {
+        setTimeout(() => {
+          exportHistory();
+          addChatMessage('Export started! 📁', 'bot');
+        }, 500);
+        return 'Exporting your readings...';
+      } else if (lowerMessage.includes('refresh') || lowerMessage.includes('update') || lowerMessage.includes('reload')) {
+        setTimeout(() => {
+          loadReadings();
+          updateGaugeDisplay();
+          generatePressureChart();
+          addChatMessage('Data refreshed! 🔄', 'bot');
+        }, 1000);
+        return 'Refreshing your data...';
+      } else if (lowerMessage.includes('clear history') || lowerMessage.includes('delete all')) {
+        if (confirm('Are you sure you want to clear all readings? This cannot be undone.')) {
+          setTimeout(() => {
+            clearAllReadings();
+            addChatMessage('All readings cleared! 🗑️', 'bot');
+          }, 500);
+        }
+        return 'Clearing all readings...';
+      } else if (lowerMessage.includes('simulate') || lowerMessage.includes('test data')) {
+        setTimeout(() => {
+          addSimulatedReadings();
+          addChatMessage('Added test readings! 🧪', 'bot');
+        }, 500);
+        return 'Adding simulated readings for testing...';
+      } else if (lowerMessage.includes('show metrics') || lowerMessage.includes('current status')) {
+        const pressure = appState.currentPressure.toFixed(2);
+        const remaining = ((appState.currentPressure / appState.maxPressure) * appState.selectedWeight).toFixed(2);
+        const status = appState.currentPressure > 12 ? 'Full' : appState.currentPressure > 8 ? 'Medium' : 'Low';
+        return `Current status: ${pressure} bar pressure, ${remaining} kg remaining (${status}) 📊`;
+      } else if (lowerMessage.includes('forecast') || lowerMessage.includes('when empty') || lowerMessage.includes('end date')) {
+        if (appState.readings.length < 2) {
+          return 'Need at least 2 readings for accurate forecasting. Add more readings to get predictions! 📈';
+        }
+        // Simple linear regression for forecast
+        const sorted = [...appState.readings].sort((a, b) => a.date - b.date);
+        const recent = sorted.slice(-3);
+        if (recent.length >= 2) {
+          const avgDrop = recent.reduce((sum, r, i) => {
+            if (i === 0) return sum;
+            const hours = (r.date - recent[i-1].date) / (1000 * 60 * 60);
+            return sum + (recent[i-1].pressure - r.pressure) / hours;
+          }, 0) / (recent.length - 1);
+          
+          if (avgDrop > 0) {
+            const hoursLeft = appState.currentPressure / avgDrop;
+            const endDate = new Date(Date.now() + hoursLeft * 60 * 60 * 1000);
+            return `Estimated empty in ${Math.round(hoursLeft)} hours (${endDate.toLocaleDateString()}) ⏰`;
+          }
+        }
+        return 'Calculating forecast... Need more data points for accurate prediction.';
+      } else if (lowerMessage.includes('leak check') || lowerMessage.includes('check leak')) {
+        const recent = appState.readings.slice(0, 2);
+        if (recent.length >= 2) {
+          const drop = recent[0].pressure - recent[1].pressure;
+          const timeDiff = (recent[0].date - recent[1].date) / (1000 * 60);
+          const dropRate = drop / timeDiff;
+          
+          if (dropRate > appState.settings.leakThreshold) {
+            return `⚠️ Possible leak detected! Pressure dropped ${drop.toFixed(2)} bar in ${Math.round(timeDiff)} minutes.`;
+          } else {
+            return `✅ No leak detected. Pressure is stable (${dropRate.toFixed(3)} bar/min drop rate).`;
+          }
+        }
+        return 'Need at least 2 readings to check for leaks.';
+      } else if (lowerMessage.includes('usage rate') || lowerMessage.includes('consumption')) {
+        if (appState.readings.length >= 2) {
+          const sorted = [...appState.readings].sort((a, b) => b.date - a.date);
+          const first = sorted[sorted.length - 1];
+          const last = sorted[0];
+          const days = (last.date - first.date) / (1000 * 60 * 60 * 24);
+          const totalDrop = first.pressure - last.pressure;
+          const dailyDrop = totalDrop / days;
+          const kgPerDay = (dailyDrop / appState.maxPressure) * appState.selectedWeight;
+          
+          return `Usage rate: ${kgPerDay.toFixed(2)} kg/day (${dailyDrop.toFixed(2)} bar/day) 📉`;
+        }
+        return 'Need more readings to calculate usage rate.';
+      } else if (lowerMessage.includes('help') || lowerMessage.includes('commands') || lowerMessage.includes('what can you do')) {
+        return `I can help with: 
+• "add reading" - Open add reading form
+• "toggle dark" - Switch dark mode
+• "open settings" - Open settings panel  
+• "export" - Export readings data
+• "refresh" - Reload all data
+• "clear history" - Delete all readings
+• "simulate" - Add test data
+• "show metrics" - Current status
+• "forecast" - When cylinder empty
+• "leak check" - Check for leaks
+• "usage rate" - Daily consumption
+• "select [size]" - Change cylinder (5kg, 14.2kg, 19kg, 47.5kg)
+What would you like to do? 🤖`;
+      } else if (lowerMessage.match(/select (\d+(\.\d+)?)kg?/)) {
+        const match = lowerMessage.match(/select (\d+(\.\d+)?)kg?/);
+        const size = parseFloat(match[1]);
+        const validSizes = [5, 14.2, 19, 47.5];
+        if (validSizes.includes(size)) {
+          setTimeout(() => {
+            selectCylinderBySize(size);
+            addChatMessage(`Cylinder size changed to ${size} kg! 🛢️`, 'bot');
+          }, 500);
+          return `Switching to ${size} kg cylinder...`;
+        }
+        return `Available sizes: 5kg, 14.2kg, 19kg, 47.5kg`;
+      }
       
       // Simple keyword-based responses
       if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
@@ -2610,9 +2780,7 @@
         return 'You can add new pressure readings using the "Add a reading" section. Just enter the bar value and timestamp, then click "Save reading".';
       } else if (lowerMessage.includes('leak')) {
         return 'Leak detection monitors pressure drops. If there\'s a sudden pressure loss, you\'ll see a leak alert in the Forecast & safety section.';
-      } else if (lowerMessage.includes('forecast') || lowerMessage.includes('end date')) {
-        return 'The system forecasts when your cylinder will run out based on pressure trends. You need at least 2 readings for an accurate forecast.';
-      } else if (lowerMessage.includes('history') || lowerMessage.includes('export')) {
+      } else if (lowerMessage.includes('history')) {
         return 'You can export your readings as CSV or JSON using the export button in the History section. You can also sort by date or pressure!';
       } else if (lowerMessage.includes('settings')) {
         return 'Settings let you customize notifications, auto-sync, refill reminders, and leak/pressure alert thresholds.';
