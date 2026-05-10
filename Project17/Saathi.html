@@ -37,6 +37,22 @@
       border-bottom: 1px solid #ddd;
       padding-bottom: 14px;
       margin-bottom: 20px;
+      background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      animation: headerFadeIn 0.8s ease-out;
+    }
+
+    @keyframes headerFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .brand {
@@ -46,15 +62,33 @@
     }
 
     .logo {
-      width: 32px;
-      height: 32px;
-      background: #ef2b2b;
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #ef2b2b, #c41616);
       color: white;
       display: grid;
       place-items: center;
       font-weight: bold;
-      border-radius: 2px;
+      border-radius: 8px;
       transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .logo::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+      transform: rotate(45deg);
+      transition: transform 0.6s ease;
+    }
+
+    .logo:hover::before {
+      transform: rotate(45deg) translate(50%, 50%);
     }
 
     .logo:hover {
@@ -64,16 +98,58 @@
     }
 
     .brand h1 {
-      font-size: 25px;
-      font-weight: 600;
+      font-size: 28px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin: 0;
+      background: linear-gradient(135deg, #ef2b2b, #c41616);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
 
-    .brand p,
-    .top-info {
+    .brand p {
       color: #666;
-      font-size: 12px;
-      text-align: right;
+      font-size: 14px;
+      margin: 4px 0 0 0;
+      font-weight: 500;
+    }
+
+    .top-info {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
       min-width: 180px;
+    }
+
+    .last-reading-card {
+      background: white;
+      border: 1px solid #e1e8ed;
+      border-radius: 8px;
+      padding: 8px 12px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      transition: all 0.3s ease;
+    }
+
+    .last-reading-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .last-reading-label {
+      font-size: 11px;
+      color: #666;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .last-reading-value {
+      font-size: 13px;
+      color: #2c3e50;
+      font-weight: 600;
+      margin-top: 2px;
     }
 
     .menu-container {
@@ -81,18 +157,20 @@
     }
 
     .signin {
-      border: 1px solid #ccc;
+      border: 1px solid #e1e8ed;
       background: white;
-      padding: 8px 14px;
-      border-radius: 3px;
+      padding: 10px 16px;
+      border-radius: 8px;
       cursor: pointer;
       transition: all 0.25s ease;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+      font-weight: 500;
     }
 
     .signin:hover {
-      border-color: #999;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      border-color: #ef2b2b;
+      box-shadow: 0 4px 12px rgba(239, 43, 43, 0.1);
+      transform: translateY(-1px);
     }
 
     section {
@@ -1270,7 +1348,10 @@
         </div>
       </div>
       <div class="top-info">
-        <div id="lastReadingText">Last reading<br />Apr 25, 10:58 AM</div>
+        <div class="last-reading-card">
+          <div class="last-reading-label">Last reading</div>
+          <div class="last-reading-value" id="lastReadingText">Apr 25, 10:58 AM</div>
+        </div>
         <div class="menu-container">
           <button class="menu-btn" onclick="toggleMenu()">☰</button>
           <div class="menu-dropdown" id="menuDropdown">
