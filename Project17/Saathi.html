@@ -184,22 +184,42 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 12px;
+      padding: 14px 18px;
       border-bottom: 1px solid #e5e5e5;
+      border-radius: 14px 14px 0 0;
+      background: linear-gradient(180deg, #fafbff 0%, #ffffff 100%);
       font-size: 13px;
-      font-weight: bold;
+      font-weight: 700;
+      letter-spacing: 0.01em;
       transition: background 0.3s ease, border-bottom-color 0.3s ease;
     }
 
     .section-title span {
-      color: #777;
-      font-weight: normal;
+      color: #5f6f85;
+      font-weight: 500;
       font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .section-title .status-pill {
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(44, 155, 101, 0.12);
+      color: #2c9b65;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
     }
 
     .content {
-      padding: 14px;
-      transition: background 0.3s ease, border-color 0.3s ease;
+      padding: 20px;
+      background: #ffffff;
+      border-radius: 0 0 14px 14px;
+      box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.03);
+      transition: background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
     }
 
     .cylinder-grid {
@@ -528,6 +548,16 @@
       padding: 14px 16px;
       transition: background 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
       background: #fff;
+      min-height: 78px;
+    }
+
+    .history-item.empty {
+      justify-content: center;
+      text-align: center;
+      border-style: dashed;
+      border-color: #d7dde8;
+      color: #606d82;
+      background: #f7f8ff;
     }
 
     .history-item:hover {
@@ -1311,6 +1341,49 @@
       transform: scale(0.95);
     }
 
+    .toast {
+      position: fixed;
+      right: 24px;
+      bottom: 96px;
+      min-width: 260px;
+      max-width: calc(100vw - 48px);
+      padding: 14px 18px;
+      border-radius: 14px;
+      color: white;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.16);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(14px);
+      transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+      z-index: 1001;
+      pointer-events: none;
+    }
+
+    .toast.visible {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .toast.success {
+      background: rgba(44, 155, 101, 0.96);
+    }
+
+    .toast.error {
+      background: rgba(239, 43, 43, 0.96);
+    }
+
+    .toast.info {
+      background: rgba(44, 136, 198, 0.96);
+    }
+
+    .status-pill.red {
+      background: rgba(239, 43, 43, 0.12);
+      color: #ef2b2b;
+    }
+
     .chatbox-toggle-btn.hidden {
       opacity: 0;
       visibility: hidden;
@@ -1397,7 +1470,7 @@
     </section>
 
     <section>
-      <div class="section-title">Live status <span class="green">● Full</span></div>
+      <div class="section-title">Live status <span class="status-pill green">Full</span></div>
       <div class="content status-box">
         <div class="gauge">
           <strong id="percent">100%</strong>
@@ -1425,7 +1498,7 @@
     </section>
 
     <section>
-      <div class="section-title">Key metrics <span>4 entries</span></div>
+      <div class="section-title">Key metrics <span class="status-pill">4 entries</span></div>
       <div class="metrics-grid">
         <div class="metric-card"><span class="metric-icon">📈</span><div class="metric-label">Usage rate</div><div class="metric-value">—</div><small>kg/day</small></div>
         <div class="metric-card"><span class="metric-icon">⛽</span><div class="metric-label">Gas left</div><div class="metric-value">14.20</div><small>of 14.2 kg</small><div class="progress-bar"><div class="progress-fill" style="width: 100%"></div></div></div>
@@ -1652,6 +1725,8 @@
     </div>
   </div>
 
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
   <script>
     // State Management
     let appState = {
@@ -1834,6 +1909,19 @@
       const history = document.getElementById('history');
       history.innerHTML = '';
 
+      if (appState.readings.length === 0) {
+        history.innerHTML = `
+          <div class="history-item empty">
+            <div>
+              <b>No readings yet</b><br />
+              <small>Add a pressure reading to get started and see your dashboard come alive.</small>
+            </div>
+          </div>`;
+        const span = document.querySelector('.history-box').closest('section').querySelector('.section-title span');
+        if (span) span.innerText = '0 entries';
+        return;
+      }
+
       // Sort readings based on current sortOrder
       const sortedReadings = [...appState.readings].sort((a, b) => {
         switch (sortOrder) {
@@ -1898,6 +1986,18 @@
 
     function closeModal(modalId) {
       document.getElementById(modalId).classList.remove('active');
+    }
+
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast');
+      if (!toast) return;
+      toast.textContent = message;
+      toast.className = `toast ${type}`;
+      toast.classList.add('visible');
+      clearTimeout(window.saathiToastTimer);
+      window.saathiToastTimer = setTimeout(() => {
+        toast.classList.remove('visible');
+      }, 3200);
     }
 
     function openSignInModal() {
@@ -1984,7 +2084,7 @@
         passwordInput.value = '';
         rememberCheckbox.checked = false;
         closeModal('signInModal');
-        alert('Signed in successfully as ' + appState.userEmail);
+        showToast('Signed in successfully as ' + appState.userEmail, 'success');
       }, 700);
     }
 
@@ -1997,7 +2097,7 @@
       saveAppState();
       updateAuthUI();
       closeMenu();
-      alert('Signed out successfully');
+      showToast('Signed out successfully', 'info');
     }
 
     // Update Auth UI
@@ -2051,7 +2151,7 @@
       localStorage.setItem('lowPressureAlert', appState.settings.lowPressureAlert);
 
       closeModal('settingsModal');
-      alert('Settings saved successfully!');
+      showToast('Settings saved successfully!', 'success');
     }
 
     // Daily Usage Generator
@@ -2250,7 +2350,7 @@
       const date = new Date(document.getElementById('dateInput').value);
 
       if (isNaN(pressure) || pressure < 0 || pressure > 20) {
-        alert('Please enter a valid pressure value (0-20 bar)');
+        showToast('Please enter a valid pressure value (0-20 bar)', 'error');
         return;
       }
 
@@ -2278,7 +2378,7 @@
       updateGaugeDisplay();
       generatePressureChart();
       updateLastReadingDisplay();
-      alert('Reading saved successfully!');
+      showToast('Reading saved successfully!', 'success');
     }
 
     // Add Current Reading
@@ -2287,12 +2387,12 @@
       const date = new Date();
 
       if (isNaN(pressure) || pressure < 0 || pressure > 20) {
-        alert('Please enter a valid pressure value (0-20 bar)');
+        showToast('Please enter a valid pressure value (0-20 bar)', 'error');
         return;
       }
 
       if (!appState.isLoggedIn) {
-        alert('Sign in to sync readings and keep them in your profile. Local history will still remain available.');
+        showToast('Sign in to sync readings and keep history in your profile.', 'info');
       }
 
       appState.currentPressure = pressure;
@@ -2319,7 +2419,7 @@
       updateGaugeDisplay();
       generatePressureChart();
       updateLastReadingDisplay();
-      alert('Current reading added successfully!');
+      showToast('Current reading added successfully!', 'success');
     }
 
     // Delete Reading
@@ -2374,7 +2474,7 @@
       const saveEdit = () => {
         const newPressure = parseFloat(input.value);
         if (isNaN(newPressure) || newPressure < 0 || newPressure > 50) {
-          alert('Please enter a valid pressure between 0 and 50 bar.');
+          showToast('Please enter a valid pressure between 0 and 50 bar.', 'error');
           input.focus();
           return;
         }
@@ -2454,7 +2554,7 @@
     // Export History
     function exportHistory() {
       if (appState.readings.length === 0) {
-        alert('No readings to export.');
+        showToast('No readings to export.', 'info');
         return;
       }
       
@@ -2492,7 +2592,7 @@
     // Clear History
     function clearHistory() {
       if (appState.readings.length === 0) {
-        alert('No readings to clear.');
+        showToast('No readings to clear.', 'info');
         return;
       }
       
